@@ -23,6 +23,7 @@ from time import clock #, strftime
 from matplotlib import pyplot as plt
 import pandas as pd 
 from scipy.interpolate import interp1d
+from scipy.optimize import curve_fit
 from scipy.special import gammainc
 from itertools import islice
 
@@ -630,7 +631,6 @@ def fig_EB_at_barrier(simPa,
     EB_signal, EB_signal_average, max_barrier_contact_frames, min_length_run_frames, frame_window = analyse_EB_signal(simPa, 
                                                                                  EB_comet_sum, barrier_contact_times)
     
-    from scipy.optimize import curve_fit
     def func(x, a, b, c):
         return a * np.exp(-b * x) + c
 
@@ -1021,7 +1021,17 @@ def fig_display_examples(simPa,
     
     
 def fig_EB_profile(simPa, file_figure, num_fig, EB_profiles, MT_length_full, w_size):
-    
+    """ Figure to display EB profile.
+        
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    """
     # Analyse the simulated EB profiles
     EB_mean, v_mean = analyse_EB_profile(simPa, MT_length_full, EB_profiles, w_size)
     
@@ -1097,7 +1107,17 @@ def fig_EB_profile(simPa, file_figure, num_fig, EB_profiles, MT_length_full, w_s
     plt.show()
     
 def fig_MT_ageing(simPa, file_figure, num_fig, c_times):
-    ## Calculate the age-dependent microtubule catastrophe frequency
+    """ Calculate the age-dependent microtubule catastrophe frequency
+        
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    """
 
     X_dist = np.sort(c_times)
     Y_dist = np.cumsum(np.ones(len(c_times)))/len(c_times)
@@ -1106,7 +1126,7 @@ def fig_MT_ageing(simPa, file_figure, num_fig, c_times):
     
     C_freq = np.vstack((X_dist,Y_dist)).T
     
-    fig = plt.figure(1, figsize=(12, 7))
+    plt.figure(1, figsize=(12, 7))
     plt.clf()
     
     plt.plot(X_dist, f)
@@ -1125,7 +1145,25 @@ def fig_MT_ageing(simPa, file_figure, num_fig, c_times):
     return C_freq
     
 
-def fig_dist_fit(simPa, file_figure, num_fig, Cum_dist, dt):
+def fig_dist_fit(simPa, 
+                 file_figure, 
+                 num_fig, 
+                 Cum_dist, dt):
+    """
+            
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    Cum_dist:
+        TODO
+    dt:
+        TODO
+    """
     
     fig, ax1 = plt.subplots(figsize=(12, 7))
     plt.clf()
@@ -1146,6 +1184,7 @@ def fig_dist_fit(simPa, file_figure, num_fig, Cum_dist, dt):
     x = Cum_dist[0]
     x_fit = np.linspace(0,x[-1],1000)
     y = np.linspace(0,1,len(x))
+    
     # Fit cumulative distribution to the Gamma function  
     popt1, pcov1 = curve_fit(gamma_cdf,x, y, p0=(1, 1e-2))
     y1 = gamma_cdf(x_fit, *popt1)  
@@ -1221,24 +1260,6 @@ def fig_dist_fit(simPa, file_figure, num_fig, Cum_dist, dt):
         ax2.set_xlabel('length [um]')
     ax2.set_ylabel('Tip diffusion [$nm^{2}s^{-1}$]')
     ax2.set_title('Microtubule ageing')
-        
-    
-    # Calculate N_unstable evolution
-#    N_unstable = []
-#    if simPa.unstable_cap_time:
-#        for i in range(len(x_fit)):
-#            N_unstable.append((simPa.unstable_cap_start - simPa.unstable_cap_end)*np.exp(-1*simPa.unstable_cap_rate*x_fit[i])+simPa.unstable_cap_end)
-#    else:
-#        N_unstable = np.ones(len(x_fit))*simPa.unstable_cap_criteria
-#    
-#    # Plot evolution N_unstable    
-#    color = 'tab:blue'
-#    ax3 = ax2.twinx()
-#    
-#    ax3.plot(x_fit, N_unstable, color=color)
-#    ax3.set_ylabel('$N_{unstable}$',color=color)
-#    ax3.tick_params(axis='y',labelcolor=color)
-#    ax3.set_ylim((0, 1.2*np.max(N_unstable)))
     
     plt.hold(False)
     
@@ -1249,19 +1270,52 @@ def fig_dist_fit(simPa, file_figure, num_fig, Cum_dist, dt):
 
     plt.show()  
 
-def fig_nucleation(simPa, file_figure, num_fig, nucleation_times):
-    
+
+def fig_nucleation(simPa, 
+                   file_figure, 
+                   num_fig, 
+                   nucleation_times):
+    """ Figure showing nucleation time histogram.
+            
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    nucleation_times: list, array
+        List, array of nucleation times.
+    """
     plt.subplots(figsize=(12, 7))
     plt.clf()
-
     plt.hist(nucleation_times, bins='auto')
     plt.xlabel('time [s]')
     plt.ylabel('Counts')
-    plt.title('Nucleation time', fontsize=14)
-    
+    plt.title('Nucleation time', fontsize=14)   
     plt.show()
 
-def fig_washout(simPa,file_figure, num_fig, washout_times, catastrophe_washout, MT_length_sum):     
+
+def fig_washout(simPa,
+                file_figure, 
+                num_fig, 
+                washout_times, 
+                catastrophe_washout, 
+                MT_length_sum):  
+    """ Figure showing MT behavior for washout experiment.
+            
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    washout_times:
+        TODO
+    """
     # Plot the washout delay times    
     fig, axs = plt.subplots(1,3, figsize=(14,7))
     axs[0].hist(washout_times, bins='auto')
@@ -1298,10 +1352,25 @@ def fig_washout(simPa,file_figure, num_fig, washout_times, catastrophe_washout, 
         plt.savefig(filename+'.eps', format='eps', dpi=1000)
         plt.savefig(filename+'.png', format='png', dpi=200)    
 
-
     
-def fig_cap_size_before_cat(simPa,file_figure, num_fig, MT_length_full, cap_end):
-#    min_length_run = 2* simPa.min_length_run # only consider runs longer than xx frames
+def fig_cap_size_before_cat(simPa,
+                            file_figure, 
+                            num_fig, 
+                            MT_length_full, 
+                            cap_end):
+    """ Figure showing cap size before catastrophe.
+            
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    washout_times:
+        TODO
+    """
     min_length_run_frames = int(simPa.min_length_run/simPa.frame_rate_actual)  
         
     MT_run_length = []
@@ -1322,13 +1391,11 @@ def fig_cap_size_before_cat(simPa,file_figure, num_fig, MT_length_full, cap_end)
     
     plt.figure(num_fig)
     plt.clf()
-    #simPa.frame_rate_actual * np.arange(-min_length_run_frames,0)
 
     plt.hold(True)
     plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames,0), 
              cap_average[0:min_length_run_frames][::1],'red', linewidth=2.0) 
     
-    #plt.plot(range(-simPa.show_fraction+1,1) ,EB_signal_average[0:simPa.show_fraction][::-1],'red', linewidth=2.0) 
     for a in range(0,len(valid_runs)):
         plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames,0), 
                  cap_before_cat[a][0:min_length_run_frames][::1],color=plt.cm.Reds(0.3+0.7*a/len(valid_runs))) 
@@ -1346,4 +1413,3 @@ def fig_cap_size_before_cat(simPa,file_figure, num_fig, MT_length_full, cap_end)
             plt.savefig(filename+'.png', format='png', dpi=200) 
     
     plt.show()    
-    
