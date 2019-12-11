@@ -23,6 +23,7 @@ from time import clock #, strftime
 from matplotlib import pyplot as plt
 import pandas as pd 
 from scipy.interpolate import interp1d
+from scipy.special import gammainc
 from itertools import islice
 
 # Initialize random number generator:
@@ -117,24 +118,49 @@ def distribution_compare(Cum_hist1,
     return (np.mean((fit1(xnew) - fit2(xnew))**2))
 
 
-def valid_EB_runs(simPa, EB_comet_sum, barrier_contact_times =[]):
-    """
+def valid_EB_runs(simPa, 
+                  EB_comet_sum, 
+                  barrier_contact_times = []):
+    """ Function to select valid runs (runs longer than min_length_run).
+    
+    Args:
+    -------
+    simPa: parameter set 
+        Simulation parameters in "ParameterSet" format.
+    EB_comet_sum: list
+        List containing EB counts in comet. #TODO: check
+    barrier_contact_times: list
+        List containing barrier contact times.
     """
     
     # Select valid runs
     b = []
-    if simPa.barrier: #if barrier present  
-        for a in range(0,len(EB_comet_sum)):
+    if simPa.barrier: # if barrier present  
+        for a in range(0, len(EB_comet_sum)):
             b.append(len(EB_comet_sum[a]) * simPa.frame_rate_actual - barrier_contact_times[a])
     else:
-        for a in range(0,len(EB_comet_sum)):
+        for a in range(0, len(EB_comet_sum)):
             b.append(len(EB_comet_sum[a]) * simPa.frame_rate_actual)
             
     valid_runs = np.where(np.array(b) > simPa.min_length_run)[0] 
     
     return valid_runs
 
-def analyse_EB_signal(simPa, EB_comet_sum, barrier_contact_times):
+
+def analyse_EB_signal(simPa, 
+                      EB_comet_sum, 
+                      barrier_contact_times):
+    """ Function to analyse EB signal
+    
+    Args:
+    -------
+    simPa: parameter set 
+        Simulation parameters in "ParameterSet" format.
+    EB_comet_sum: list
+        List containing EB counts in comet. #TODO: check
+    barrier_contact_times: list
+        List containing barrier contact times.
+    """
     
     # Select valid runs
     valid_runs = valid_EB_runs(simPa, EB_comet_sum, barrier_contact_times)
@@ -145,6 +171,7 @@ def analyse_EB_signal(simPa, EB_comet_sum, barrier_contact_times):
      
     EB_signal = np.zeros((len(valid_runs), frame_window+1)) #simPa.min_length_run+1+max_barrier_contact)) #put individual runs into one np.array
     normalize_EB_signal = np.zeros(frame_window+1) #simPa.min_length_run+1+max_barrier_contact)
+    
     for a in range(0,len(valid_runs)):
         frame_barrier_contact = int(np.round(barrier_contact_times[valid_runs[a]]/simPa.frame_rate_actual,0))
         EB_signal[a][(max_barrier_contact_frames-frame_barrier_contact):frame_window] \
@@ -157,27 +184,55 @@ def analyse_EB_signal(simPa, EB_comet_sum, barrier_contact_times):
     return EB_signal, EB_signal_average, max_barrier_contact_frames, min_length_run_frames, frame_window
 
 
-## ----------------------------------------------------------------
-## Some general functions
-## ----------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# -------------------------- Small helper functions ---------------------------
+# -----------------------------------------------------------------------------
     
-def frange(start, stop, step): # new function since "range" does not support floats
+def frange(start, stop, step): 
+    """ Function as alternative for "range, since "range" does not support floats.
+    """
     i = start
     while i < stop:
         yield i
         i += step
 
 
-def list_dim(a):
-    if not type(a) == list:
+def list_dim(lst):
+    """ Function to return the dimension of a list (e.g. nested list).
+    """
+    if not type(lst) == list:
         return 0
-    return len(a) + list_dim(a[0])
+    return len(lst) + list_dim(lst[0])
 
-## ---------------------------------------------------------------
-## FIGURES
-## ---------------------------------------------------------------  
 
-## Figure styles
+# Define Gaussian distribution
+def gaussian(x, mu, sig):
+    return np.exp(-np.power(x - mu, 2.) / (2 * np.power(sig, 2.)))
+
+def gamma_cdf(x, n, r):
+    return gammainc(n, r*x)
+
+def exp_cdf(x, k):
+    return 1 - np.exp(-k*x)
+
+# Define a sliding window
+def window(seq, n):
+    """ Generater that returns a sliding window (of width n) over data from the iterable/
+    s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   
+    """
+    it = iter(seq)
+    result = tuple(islice(it, n))
+    if len(result) == n:
+        yield result
+    for elem in it:
+        result = result[1:] + (elem,)
+        yield result
+
+# -----------------------------------------------------------------------------
+# ----------------------------- Figure functions ------------------------------
+# -----------------------------------------------------------------------------
+
+# Figure styles
 from matplotlib.font_manager import FontProperties
 font = FontProperties()
 font.set_family('sans-serif')
@@ -185,8 +240,97 @@ font.set_style('normal')
 font.set_weight('light') 
 
 
+def fig_sim_verification(simPa, 
+                         file_figure, 
+                         num_fig, 
+                         MT_length_full, 
+                         cap_end, 
+                         d_steps=1):
+    """ Compare the fixed parameter v_g and D_tip with the simulated results.
+    
+    d_steps = 2 # in time_steps
+    
+    Args:
+    ------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format
+    file_figure: str
+        Folder for storing figures and data
+    num_fig: int
+        Figure number
+    MT_length_full: numpy array ? #TODO:check
+        ...
+    cap_end
+        ...
+    d_steps: ...
+    """
+    
+    # Calculate the growth fluctuations
+    v_fluc = []
+    c_fluc = []
+    
+    # Remove cap=seed position
+    L_seed = int(np.ceil(simPa.tip_window/simPa.dL_dimer))
+    for i in range(len(cap_end)):
+        cap_temp = cap_end
+        index = np.argmax(np.asarray(cap_end[i]) > L_seed)
+        del cap_temp[i][:index]
+        
+    cap_end_ss = cap_temp
+    
+    for i in range(len(MT_length_full)):
+        v_fluc.extend(np.diff(MT_length_full[i]))
+        c_fluc.extend(np.diff(cap_end_ss[i]))                    
+    
+    sample_size = len(c_fluc)
+    
+    c_fluc = np.sort(c_fluc)
+    index = np.argmax(np.asarray(c_fluc) > 0)    
+    c_fluc = c_fluc[int(index):]    
+    
+    v_fluc = np.asarray(v_fluc)*(simPa.dL_dimer*1000)
+    c_fluc = np.asarray(c_fluc)*(simPa.dL_dimer*1000)        
+    
+    # Calculate the growth distribution based on the fixed parameters
+    mu = simPa.growth_rate_one*simPa.frame_rate_actual # mean growth rate in dimers/frame
+    sig = ((2*simPa.D_tip*(simPa.frame_rate_actual*d_steps))**0.5)
+    x = np.arange(mu-5*sig, mu+5*sig, 1)
+    G = gaussian(x, mu, sig)
+    G = G / np.sum(G) # normalize gaussian
+    
+    # Plot the results
+    fig , (ax1, ax2) = plt.subplots(1,2, figsize=(12, 7))
+    
+    ax1.hold(True)
+    ax1.hist(v_fluc, bins = 60, density = True, color = "skyblue", label = "simulated data")
+    ax1.plot(x, G, 'r', label = "theoretical distribution")
+    ax1.hold(False)
+    
+    ax2.hist(c_fluc, bins = 60, density = True, color = "skyblue", label = "simulated data")
 
-def fig_cat_dist(simPa, file_figure, num_fig, catastrophe_times, Cum_dist_compare):
+    move =  len(c_fluc)/sample_size
+    pause = 1 - move
+    step_mean = np.mean(c_fluc)
+    step_std =  np.std(c_fluc)              
+    
+    if simPa.record_data:        
+            filename = file_figure + '_fig' + str(int(num_fig))
+            plt.savefig(filename+'.eps', format='eps', dpi=1000)
+            plt.savefig(filename+'.png', format='png', dpi=200) 
+            
+    plt.show()
+    
+    print('Pausing probability: %.2f' %pause)
+    print('Step probability: %.2f' %float(1-pause))
+    print('Mean step size: %.1f +- %.1f nm' %(step_mean, step_std))    
+    print('Mean pausing duration: %.2f sec ' %float(step_mean/(simPa.growth_speed*1000/60)))   
+    
+
+def fig_cat_dist(simPa, 
+                 file_figure, 
+                 num_fig, 
+                 catastrophe_times, 
+                 Cum_dist_compare):
     """ Catastrophe distribution compared to data 
     
     Args:
@@ -252,8 +396,7 @@ def fig_cat_dist(simPa, file_figure, num_fig, catastrophe_times, Cum_dist_compar
         if simPa.record_data:        
             filename = file_figure + '_fig' + str(int(num_fig))
             plt.savefig(filename+'.eps', format='eps', dpi=1000)
-            plt.savefig(filename+'.png', format='png', dpi=200) 
-            
+            plt.savefig(filename+'.png', format='png', dpi=200)           
         
         plt.show()  
         
@@ -261,17 +404,23 @@ def fig_cat_dist(simPa, file_figure, num_fig, catastrophe_times, Cum_dist_compar
         print('No proper input found.')
 
 
-
-
-
 def fig_cat_cumulative(simPa, file_figure, num_fig, Cum_dist, Cum_dist_compare = [0]):
-    ## Plot cumulative catastrophe distribution (or barrier contact time distribution)
-    ## Compare to (experimental) data if given.
-    # simPa - simulation parameters in "ParameterSet" format
-    # file_figure - folder for storing figures and data
-    # num_fig - figure number
-    # Cum_dist - cumulative catastrophe time distribution
-    # Cum_hist_compare - cumulative catastrophe time distribution for comparison
+    """ Plot cumulative catastrophe distribution (or barrier contact time distribution).
+    Compare to (experimental) data if given.
+    
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    Cum_dist: list, array #TODO:check
+        Cumulative catastrophe time distribution.
+    Cum_hist_compare: list, array #TODO:check
+        Cumulative catastrophe time distribution for comparison.
+    """
     
     fig = plt.figure(1, figsize=(12, 7))
     plt.clf()
@@ -287,8 +436,7 @@ def fig_cat_cumulative(simPa, file_figure, num_fig, Cum_dist, Cum_dist_compare =
     elif isinstance(Cum_dist, np.ndarray):
         Cum_dist = [Cum_dist] #put numpy array into list
     else:
-        print('Error: Input cumulative distributions must be numpy arrays or lists of numpy arrays.' )
-              
+        print('Error: Input cumulative distributions must be numpy arrays or lists of numpy arrays.' )            
   
     if len(Cum_dist_compare) > 1: # i.e.if comparison data is given   
         if isinstance(Cum_dist_compare, list):
@@ -356,9 +504,6 @@ def fig_cat_cumulative(simPa, file_figure, num_fig, Cum_dist, Cum_dist_compare =
     figtext.append('$k_{hyd} = %.3f s^{-1}$' %simPa.kBC) 
     figtext.append('dt = %.2f s  ||  V = %.2f um/s' %(simPa.dt, simPa.growth_rate_one*60*simPa.dL_dimer))
     figtext.append('actual frame rate = %.2f /s' %simPa.frame_rate_actual)
-#    figtext.append('Results (n = %d) -------------------------------' %len(Cum_dist))
-#    figtext.append('MSE = %.6f ' %distribution_compare(Cum_dist, Cum_dist_compare[0]))
-#    figtext.append(r'$\tau_{C} = %.2f s$' %tau_c)
 
     figDX = 0.045
     for m in range(len(figtext)):
@@ -378,33 +523,28 @@ def fig_cat_cumulative(simPa, file_figure, num_fig, Cum_dist, Cum_dist_compare =
     
 
 def fig_EB_at_barrier(simPa, file_figure, num_fig, EB_comet_sum, barrier_contact_times):
-    ## Plot EB intensity (here = elements in state "B") before and at barrier contact
-    # simPa - simulation parameters in "ParameterSet" format
-    # file_figure - folder for storing figures and data
-    # num_fig - figure number
-    # EB_comet_sum - num of "B"s during a time window before catastophhe
-    # barrier_contact_times
+    """ Plot EB intensity (here = elements in state "B") before and at barrier contact.
+    
+    Args:
+    -------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format.
+    file_figure: str
+        Folder for storing figures and data.
+    num_fig: int
+        Figure number.
+    EB_comet_sum: list, array #TODO:check
+     Number of "B"s during a time window before catastophe.
+    barrier_contact_times: list, array #TODO:check
+        Barrier contact times.
+    """
     
     # Select valid runs
     valid_runs = valid_EB_runs(simPa, EB_comet_sum, barrier_contact_times)
     
     EB_signal, EB_signal_average, max_barrier_contact_frames, min_length_run_frames, frame_window = analyse_EB_signal(simPa, 
-                                                                                 EB_comet_sum, barrier_contact_times)
-     
-#    max_barrier_contact_frames = int(round(np.max(barrier_contact_times/simPa.frame_rate_actual),0)) 
-#    min_length_run_frames = int(min_length_run/simPa.frame_rate_actual)
-#    frame_window = min_length_run_frames + max_barrier_contact_frames
-#    
-#    EB_signal = np.zeros((len(valid_runs), frame_window+1)) #min_length_run+1+max_barrier_contact)) #put individual runs into one np.array
-#    normalize_EB_signal = np.zeros(frame_window+1) #min_length_run+1+max_barrier_contact)
-#    for a in range(0,len(valid_runs)):
-#        frame_barrier_contact = int(np.round(barrier_contact_times[valid_runs[a]]/simPa.frame_rate_actual,0))
-#        EB_signal[a][(max_barrier_contact_frames-frame_barrier_contact):frame_window] \
-#        = np.array(EB_comet_sum[valid_runs[a]])[0:(min_length_run_frames+frame_barrier_contact)]
-#        normalize_EB_signal[(max_barrier_contact_frames-frame_barrier_contact):frame_window] +=1
-#        
-#    EB_signal_average = np.sum(EB_signal, axis=0)
-#    EB_signal_average = EB_signal_average/normalize_EB_signal
+                                                                                                             EB_comet_sum, 
+                                                                                                             barrier_contact_times)
     
     plt.figure(num_fig)
     plt.clf()
@@ -412,10 +552,8 @@ def fig_EB_at_barrier(simPa, file_figure, num_fig, EB_comet_sum, barrier_contact
         plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames+1,max_barrier_contact_frames+1), 
                  EB_signal[a][0:frame_window][::-1],color=plt.cm.Reds(0.3+0.7*a/len(valid_runs))) 
     
-        #plt.plot(range(-simPa.show_fraction+1,int(max_barrier_contact)+1) ,EB_signal[a][0:simPa.show_fraction+max_barrier_contact][::-1],color=plt.cm.Reds(0.3+0.7*a/len(b))) 
-    plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames+1,max_barrier_contact_frames+1),
+        plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames+1,max_barrier_contact_frames+1),
              EB_signal_average[0:frame_window][::-1],'black', linewidth=3.0) 
-    #plt.plot(range(-simPa.show_fraction+1,int(max_barrier_contact)+1) ,EB_signal_average[0:simPa.show_fraction+max_barrier_contact][::-1],'black', linewidth=3.0) 
     plt.title("number of B's")
     plt.xlabel('time before barrier contact [s]');
     plt.ylabel('EB comet intensity');
