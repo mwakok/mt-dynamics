@@ -1,32 +1,45 @@
-# -*- coding: utf-8 -*-
-"""
-Functions for plotting final figures
+#
+# mt-dynamics
+#
+# Copyright 2019 Florian Huber
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
-@author: Florian Huber
-"""
-
-# import packages
+# Import packages
 import numpy as np
 import random
-from time import clock, strftime
-#from datetime import date
-#import inspect, os, shutil #modules for file handling
-#import matplotlib # module for plotting
+from time import clock #, strftime
 from matplotlib import pyplot as plt
-#from scipy import stats
 import pandas as pd 
 from scipy.interpolate import interp1d
+from itertools import islice
 
 # Initialize random number generator:
 np.random.seed(int(100*clock()))
 
-### import from FACTS
-#import Simulation_FACTS_BC as FACT #import simulation parameters
-#import Simulation_MAIN_BC as MAIN #import main simulation function
+## ----------------------------------------------------------------------------
+## --------------------------- Plotting functions -----------------------------
+## ----------------------------------------------------------------------------
 
-
-# Kaplan-Meier survivial funciton with greenwood's forumla to estimate variance
 def KMG_analysis(events, times):
+    """ Kaplan-Meier survivial funciton with greenwood's forumla to estimate variance.
+    
+    Args:
+    -------
+    events: 
+    times:
+    """
     S = np.ones(len(times)+1) #survival probability
     S[0] = 1
     V = np.ones(len(times)+1) #variance of S (Greenwood's formula)
@@ -42,14 +55,24 @@ def KMG_analysis(events, times):
     return S, V
 
 
-#include "new" error function for cumulative distributions
+
 def distribution_alternatives(distribution, num_alter, overlap):
-    # distribution = original data to compare to
-    # num_alter = number of alternative distributions to generate
-    # overlap = what fraction to (randomly) draw from original one
-    if overlap < 1: #assume that fraction between 0 and 1 was given
+    """ include "new" error function for cumulative distributions
+    
+    Args:
+    ------
+    distribution: list, array
+        Original data to compare to.
+    num_alter: int
+        Number of alternative distributions to generate
+    overlap: int, float
+        What fraction to (randomly) draw from original one.
+    """
+    if overlap < 1: 
+        # Assume that fraction between 0 and 1 was given
         overlap = int(np.ceil(overlap*len(distribution)))
-    else: #assume that overlap was given as number of desired elements (not percentage!)
+    else: 
+        # Assume that overlap was given as number of desired elements (not percentage!)
         print("Overlap given will not be interpreted as percentage!")
         overlap = int(overlap)
         
@@ -73,7 +96,19 @@ def distribution_alternatives(distribution, num_alter, overlap):
     return distribution_alternatives
 
 
-def distribution_compare(Cum_hist1, Cum_hist2, num_interpol=10000):
+def distribution_compare(Cum_hist1, 
+                         Cum_hist2, 
+                         num_interpol=10000):
+    """ 
+    Function to compare to input distributions.
+    
+    Args:
+    --------
+    Cum_hist1: list, array #TODO: check!
+    Cum_hist2: list, array #TODO: check!
+    num_interpol: int, optional
+        Number of interpolation bins. Default = 10000.
+    """
     y1 = 1/(len(Cum_hist1)-1) * np.arange(0, len(Cum_hist1) , 1)
     y2 = 1/(len(Cum_hist2)-1) * np.arange(0, len(Cum_hist2) , 1)
     fit1 = interp1d(Cum_hist1, y1, kind='nearest')
@@ -83,6 +118,9 @@ def distribution_compare(Cum_hist1, Cum_hist2, num_interpol=10000):
 
 
 def valid_EB_runs(simPa, EB_comet_sum, barrier_contact_times =[]):
+    """
+    """
+    
     # Select valid runs
     b = []
     if simPa.barrier: #if barrier present  
@@ -149,12 +187,21 @@ font.set_weight('light')
 
 
 def fig_cat_dist(simPa, file_figure, num_fig, catastrophe_times, Cum_dist_compare):
-    ## catastrophe distribution compared to data ----------------
-    # simPa - simulation parameters in "ParameterSet" format
-    # file_figure - folder for storing figures and data
-    # num_fig - figure number
-    # catastrophe_times - numpy array of catastrophe times
-    # Cum_hist_compare - cumulative catastrophe time distribution for comparison
+    """ Catastrophe distribution compared to data 
+    
+    Args:
+    ------
+    simPa: parameter set
+        Simulation parameters in "ParameterSet" format
+    file_figure: str
+        Folder for storing figures and data
+    num_fig: int
+        Figure number
+    catastrophe_times: numpy array 
+        Array of catastrophe times
+    Cum_hist_compare: list, array #TODO: check
+        Cumulative catastrophe time distribution for comparison
+    """
     
     if not isinstance(catastrophe_times, np.ndarray):
         print('Catastrophe times input format must be numpy array!')
