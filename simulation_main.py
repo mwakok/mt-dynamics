@@ -1,7 +1,7 @@
 #
 # mt-dynamics
 #
-# Copyright 2019 Florian Huber
+# Copyright 2019 Florian Huber, Maurits Kok
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -248,33 +248,35 @@ def MT_RUN(simPa):
             # Transition from dimer state 2=B to 4=C
             MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2 
             
+            """
             # -----------------------------------------------------------------
             # Possible alternative:
             # Full multi-step reaction ~ Maurer 2014 A->B (->BE) -> C
             # -----------------------------------------------------------------
             
-            #elements_in_A = np.where(MT == 1)[0] 
-            #elements_in_B = np.where(MT == 2)[0] 
-            ## based on maurer model: 
-            #elements_in_BE = np.where(MT == 3)[0] 
-            #elements_in_C = np.where(MT == 4)[0]   
+            elements_in_A = np.where(MT == 1)[0] 
+            elements_in_B = np.where(MT == 2)[0] 
+            # based on maurer model: 
+            elements_in_BE = np.where(MT == 3)[0] 
+            elements_in_C = np.where(MT == 4)[0]   
             
-            ## Shift between different stages:           
-            ## 1- throw dices:
-            #randomA = np.random.rand(len(elements_in_A))
-            #randomB = np.random.rand(len(elements_in_B))
-            ## based on maurer model: 
-            #randomBE = np.random.rand(len(elements_in_BE))
-            #randomC = np.random.rand(len(elements_in_C))
+            # Shift between different stages:           
+            # 1- throw dices:
+            randomA = np.random.rand(len(elements_in_A))
+            randomB = np.random.rand(len(elements_in_B))
+            # based on maurer model: 
+            randomBE = np.random.rand(len(elements_in_BE))
+            randomC = np.random.rand(len(elements_in_C))
             
-            ## 2- change state of elements based on dices:
-            #MT[elements_in_A[np.where(randomA<P_AB)[0]]] += 1 #go from 1=A to 2=B
-            #MT[elements_in_A[np.where(randomA<P_ABE)[0]]] += 1 # and from 2=B to 3=BE
-            #MT[elements_in_A[np.where(randomA>(1-P_AC))[0]]] += 3 #from 1=A to 4=C     
-            #MT[elements_in_B[np.where(randomB<P_BBE)[0]]] += 1 #from 2=B to 3=BE
-            #MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2 #from 2=B to 4=C   
-            #MT[elements_in_BE[np.where(randomBE<P_BEB)[0]]] -= 1 #from 3=BE to 2=B
-            #MT[elements_in_BE[np.where(randomBE>(1-P_BEC))[0]]] += 1 #from 3=BE to 4=C
+            # 2- change state of elements based on dices:
+            MT[elements_in_A[np.where(randomA<P_AB)[0]]] += 1 #go from 1=A to 2=B
+            MT[elements_in_A[np.where(randomA<P_ABE)[0]]] += 1 # and from 2=B to 3=BE
+            MT[elements_in_A[np.where(randomA>(1-P_AC))[0]]] += 3 #from 1=A to 4=C     
+            MT[elements_in_B[np.where(randomB<P_BBE)[0]]] += 1 #from 2=B to 3=BE
+            MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2 #from 2=B to 4=C   
+            MT[elements_in_BE[np.where(randomBE<P_BEB)[0]]] -= 1 #from 3=BE to 2=B
+            MT[elements_in_BE[np.where(randomBE>(1-P_BEC))[0]]] += 1 #from 3=BE to 4=C
+            """
             
                
             # -----------------------------------------------------------------
