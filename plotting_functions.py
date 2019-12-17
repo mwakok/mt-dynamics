@@ -548,7 +548,7 @@ def fig_cat_cumulative(simPa, file_figure, num_fig, Cum_dist, Cum_dist_compare =
         plt.step(Cum_dist, 1/(len(Cum_dist)-1) * np.arange(0, len(Cum_dist) , 1), 
                  where='post', color=(0.95-0.7*(i)*c_range, 0.1, 0.1 + 0.8*(i)*c_range), linewidth=1.5, label='model results')
         
-        if len(Cum_dist_compare) > 0:     
+        if len(Cum_dist_compare) > 1:     
             Cum_dist_compare_selected = Cum_dist_compare[int(comparing_index[i])]        
             
             #generate and draw distributions of same length as experimental data
@@ -597,7 +597,7 @@ def fig_cat_cumulative(simPa, file_figure, num_fig, Cum_dist, Cum_dist_compare =
         file_figure = file_figure + '_fig' + str(int(num_fig))
         plt.savefig(file_figure +'.pdf', format='pdf', dpi=1000) #, transparent=True)
         plt.savefig(file_figure +'.png', format='png', dpi=200) #, transparent=True ) 
-        file_csv = file_figure[:-10] + "EB" + str(simPa.EB*1000) + "_cumhist.csv"
+        file_csv = file_figure[:-10] + "EB" + str(simPa.EB*1000)[:-2] + "_" + str(simPa.kBC) + "_" + str(simPa.D_tip) + ".csv" 
         Cum_dist_pd = pd.DataFrame(np.round(Cum_dist,2))
         Cum_dist_pd.to_csv(file_csv, header=None, index=None)
 
