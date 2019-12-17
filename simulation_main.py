@@ -18,32 +18,7 @@
 
 # Import packages
 import numpy as np
-
-# When switching to Object oriented?
-#from parameters import ParameterSet
-#
-#class MT_run(object):
-#    """
-#    Main simulation class.
-#    MT_run object represents one simulation run
-#    """
-#    def __init__(self, sim_parameters):
-#        self.simulation_done = False
-#        self.dt = 0
-#        self.MT_length_sum = 0  
-#        self.CATASTROPHE_TIMES = 0, 
-#        self.CATASTROPHE_LENGTH = 0 
-#        self.barrier_contact_times = 0 
-#        self.EB_comet_sum = 0 
-#        self.cap_end = 0 
-#        self.frame_rate_actual = 0 
-#        self.EB_profiles = 0
-#        
-#        # Import parameter set
-#        self.simPa = ParameterSet(sim_parameters)
-#
-#
-#    def initialize(self):     
+   
 
 # -----------------------------------------------------------------------------
 # ------------ MAIN FUNCTIONS FOR MT SIMULATION ("maurer model") --------------
@@ -58,8 +33,8 @@ def MT_RUN(simPa):
     are described by different integers.
     
     5 -- stable seed dimers (no hydrolysis, no disassembly)
-    1 -- 
-    2 --
+    2 -- 'B' state dimer
+    4 -- 'C' state dimer
     
     
     Args:
@@ -108,13 +83,19 @@ def MT_RUN(simPa):
     CATASTROPHE_TIMES = []
     CATASTROPHE_LENGTH = []
     catastrophe_at_barrier =[]
+    catastrophe_washout = []
     EB_comet_sum = []
     EB_profile_intermediate = np.zeros(L_seed, dtype=np.int)
     EB_profiles = []
     show_fraction = simPa.show_fraction
+    #show_begin = simPa.min_length_begin    
     show_fraction_frames = int(show_fraction/frame_rate_actual)
     MT_length_sum = np.zeros((simPa.no_cat, show_fraction_frames))
-    barrier_contact_times = np.zeros(0);
+    Cap_length_sum = np.zeros((simPa.no_cat, show_fraction_frames))
+    MT_length_full = []
+    barrier_contact_times = np.zeros(0)
+    washout_times = np.zeros(0)
+    MT_cap = []
     
     too_long = 0 # reset
     run_time = 0 # reset
@@ -125,15 +106,10 @@ def MT_RUN(simPa):
         Lnew = L
         MT = np.ones(L, dtype=np.int)
         current_cap_end = L_seed
-        MT[0:L_seed] = 5 #set state Seed
-        
+        MT[0:L_seed] = 5 # set state Seed  
         growth = np.zeros(1)
-        #catastrophes = np.zeros(0)
         cap_end = [0] 
-        #cap_length = [0] 
         MT_length = [L] 
-    
-        #barrier_contact_count = 0    
         barrier_contact = 0 #set contact = off:
         
         #washout experiment:
@@ -143,7 +119,10 @@ def MT_RUN(simPa):
         EB_comet = [0]
         EB_profiles_wholerun = []
         
-        #interrupt run if too long (e.g. when MT too stable)
+        Cap_threshold = []
+        cap_crit = []
+        
+        # Interrupt run if too long (e.g. when MT is too stable)
         if too_long > simPa.too_stable_check:
             break;
         if run_time > simPa.total_max_time:
@@ -160,16 +139,44 @@ def MT_RUN(simPa):
                 too_long += 1
                 print("Too long growth event! (", simPa.EB, simPa.kBC, simPa.D_tip, ")")
             
-            
-            # Tip growth 
             # -----------------------------------------------------------------
+            # Option to include 'MT aging' ------------------------------------
+            # -----------------------------------------------------------------
+            # --> Make cap_threshold time-dependent
+            if simPa.unstable_cap_time:
+                criteria_new = (simPa. unstable_cap_start - simPa.unstable_cap_end) * np.exp(-1*simPa.unstable_cap_rate*(i*dt)) + simPa.unstable_cap_end
+                simPa.unstable_cap_criteria = int(np.rint(criteria_new))
+                cap_crit.append(simPa.unstable_cap_criteria)
+                f = np.ones(simPa.unstable_cap_criteria) #filter for end-of-cap testing
+            else:                 
+                cap_crit.append(simPa.unstable_cap_criteria)
+                f = np.ones(simPa.unstable_cap_criteria) #filter for end-of-cap testing
+                
+            # --> Make D_tip time-dependent
+            if simPa.D_tip_time:
+                D_tip_new = (simPa.D_tip_end - simPa.D_tip_start) * (1 - np.exp(-1*simPa.D_tip_rate_T*(i*dt))) + simPa.D_tip_start
+                tip_noise = (2*dt*D_tip_new)**0.5/(simPa.dL_dimer*1000)
+
+            # --> Make D_tip length-dependent
+            if simPa.D_tip_length:
+                D_tip_new = (simPa.D_tip_end - simPa.D_tip_start) * (1 - np.exp(-1*simPa.D_tip_rate_L*L)) + simPa.D_tip_start
+                tip_noise = (2*dt*D_tip_new)**0.5/(simPa.dL_dimer*1000)
+
+            # --> Make k_BC time-dependent
+            if simPa.kBC_time:
+                kBC_new = (simPa.kBC_end - simPa.kBC_start) * (1 - np.exp(-1*simPa.kBC_rate*(i*dt))) + simPa.kBC_start
+                P_BC = kBC_new * dt
             
+            # -----------------------------------------------------------------
+            # Tip growth ------------------------------------------------------
+            # -----------------------------------------------------------------
             deterministic_growth = deterministic_growth + P_growth #here: only to time "growth event"
             
-            if deterministic_growth >= 1: #growth event:
+            if deterministic_growth >= 1: # if growth event:
                 deterministic_growth = deterministic_growth-1
                 growth = np.round(dimers_per_step + tip_noise*np.random.randn(1))
-                '''if MT[L-1] == 1:
+                ''' Option to include dimer-type dependent growth dynamics
+                if MT[L-1] == 1:
                     growth = round(1+ simPa.noise_STD_A*np.random.randn(1)) #%= random number with std= 1; Round to draw discrete number
                 elif MT[L-1] == 4:
                     growth = round(P_growth_C + simPa.noise_STD_C*np.random.randn(1))
@@ -178,18 +185,14 @@ def MT_RUN(simPa):
                 else: # for MT[L-1] == 3
                     growth = round(P_growth_B + simPa.noise_STD_B*np.random.randn(1))   '''
                     
-                if washout == 1: #ONLY FOR TESTING
+                # Option to simulate 'washout' experiment
+                if washout == 1: 
                     if growth > 0:
                         growth = 0 #do not allow growth after tubulin washout
                     
-                if abs(growth) > 0: #growth process
-                    Lnew = L + int(growth)
-    #                if hasattr(FACT, 'barrier'): #if variable barrier present
-    #                    if Lnew > (barrier - np.ceil(simPa.DXbarrier/simPa.dL_dimer)) and barrier_contact == 0:
-    #                        barrier_contact_count += 1
-    #                    if barrier_contact_count > 5 and barrier_contact == 0:
-    #                        barrier_contact = (i-5)*dt                
-                    
+                # Actual growth --> addition of int(growth) dimers to MT
+                if abs(growth) > 0: 
+                    Lnew = L + int(growth)            
                     
                     if Lnew < L:  # MT shrinks
                         if Lnew < L_seed:
@@ -202,23 +205,23 @@ def MT_RUN(simPa):
                         if Lnew > len(MT):  
                             MT = np.append(MT,np.zeros(Lnew-L + 500, dtype=np.int))                
                         
-                        if simPa.barrier:  # If variable barrier present  
-        
+                        # Option to simlate growth against rigid barrier
+                        if simPa.barrier:
                             if Lnew > (simPa.barrier - np.ceil(simPa.DXbarrier/simPa.dL_dimer)) and barrier_contact == 0: #contact if closer than 0.1um, 0.2µm, 0.3µm?
                                 barrier_contact = i*dt 
                                 #barrier_contact = (i // frame_taking) * frame_taking * dt #time of first 'contact' with wall                    
                                 
                             if Lnew > simPa.barrier:
                                 
-                                # NO brownian ratchet-like stalling:
-                                Lnew = simPa.barrier #still possible to grow, however only till barrier
-#                                if barrier_contact == 0: #if first moment of "contact"
-#                                    barrier_contact = (i // frame_taking) * frame_taking * dt #time of first 'contact' with wall                    
-#                                    #barrier_contact = i * dt #time of first 'contact' with wall   
-#                                
-                                # Brownian ratchet-like stalling:
-                                #F_barrier = simPa.k_barrier*(Lnew - barrier)  # Spring like response at barrier
-                                #Lnew = L + (Lnew-L)*(np.random.rand(1)< np.exp(- F_barrier*1000*simPa.dL_dimer/4.1))[0]  # Mogilner: V=Vmax*exp(force*dl/(k_b*T)), k_bT=4.1pN/nm divide by 8nm/dimer
+                                # Default: NO brownian ratchet-like stalling:
+                                # Rigid barrier --> Still possible to grow, however only till barrier.
+                                Lnew = simPa.barrier 
+                               
+                                # Alternative: Brownian ratchet-like stalling:
+                                # Spring like response at barrier
+                                #F_barrier = simPa.k_barrier*(Lnew - barrier)
+                                # Mogilner: V=Vmax*exp(force*dl/(k_b*T)), k_bT=4.1pN/nm divide by 8nm/dimer
+                                #Lnew = L + (Lnew-L)*(np.random.rand(1)< np.exp(- F_barrier*1000*simPa.dL_dimer/4.1))[0]  
                                 if Lnew > L:
                                     MT[L:Lnew] = 2 #start with "B" state                   
                             else:
@@ -228,126 +231,137 @@ def MT_RUN(simPa):
                     L = Lnew
                     L = max(L, L_seed) #avoid L < L_seed
                     
-                    if simPa.washout_experiment:
-                        if barrier_contact > 0 and washout ==0:
+                    if simPa.washout:
+                        if (i*dt) >= simPa.washout_time and washout ==0:
                             washout = 1
+                            washout_time = i*dt
                     
-            # Hydrolysis --> Multi-step reaction ~ Maurer 2014 A->B (->BE) -> C
+            # -----------------------------------------------------------------
+            # Hydrolysis ------------------------------------------------------
+            # Based on ~ Maurer 2014 A->B (->BE) -> C
+            # Here: Simplified multi-step reaction, ignoring fast A -> B: 
+            # B -> C 
+            # -----------------------------------------------------------------
+            elements_in_B = np.where(MT == 2)[0]
+            randomB = np.random.rand(len(elements_in_B))
+            
+            # Transition from dimer state 2=B to 4=C
+            MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2 
+            
+            # -----------------------------------------------------------------
+            # Possible alternative:
+            # Full multi-step reaction ~ Maurer 2014 A->B (->BE) -> C
             # -----------------------------------------------------------------
             
-            #old: elements_in_A = np.where(MT == 1)[0] 
-            elements_in_B = np.where(MT == 2)[0] 
-            #old: from maurer model: elements_in_BE = np.where(MT == 3)[0] 
+            #elements_in_A = np.where(MT == 1)[0] 
+            #elements_in_B = np.where(MT == 2)[0] 
+            ## based on maurer model: 
+            #elements_in_BE = np.where(MT == 3)[0] 
             #elements_in_C = np.where(MT == 4)[0]   
             
-            # now: shift between different stages:           
-            # 1- throw dices:
-            #old: randomA = np.random.rand(len(elements_in_A))
-            randomB = np.random.rand(len(elements_in_B))
-            #old: from maurer model:randomBE = np.random.rand(len(elements_in_BE))
+            ## Shift between different stages:           
+            ## 1- throw dices:
+            #randomA = np.random.rand(len(elements_in_A))
+            #randomB = np.random.rand(len(elements_in_B))
+            ## based on maurer model: 
+            #randomBE = np.random.rand(len(elements_in_BE))
             #randomC = np.random.rand(len(elements_in_C))
             
-            # 2- change state of elements based on dices:
-            #old: MT[elements_in_A[np.where(randomA<P_AB)[0]]] += 1 #go from 1=A to 2=B
-            #old: from maurer model: MT[elements_in_A[np.where(randomA<P_ABE)[0]]] += 1 # and from 2=B to 3=BE
-            #old: from maurer model: MT[elements_in_A[np.where(randomA>(1-P_AC))[0]]] += 3 #from 1=A to 4=C 
-            
-            #old: from maurer model: MT[elements_in_B[np.where(randomB<P_BBE)[0]]] += 1 #from 2=B to 3=BE
-            MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2 #from 2=B to 4=C
-            
-            #old: from maurer model: MT[elements_in_BE[np.where(randomBE<P_BEB)[0]]] -= 1 #from 3=BE to 2=B
-            #old: from maurer model: MT[elements_in_BE[np.where(randomBE>(1-P_BEC))[0]]] += 1 #from 3=BE to 4=C
+            ## 2- change state of elements based on dices:
+            #MT[elements_in_A[np.where(randomA<P_AB)[0]]] += 1 #go from 1=A to 2=B
+            #MT[elements_in_A[np.where(randomA<P_ABE)[0]]] += 1 # and from 2=B to 3=BE
+            #MT[elements_in_A[np.where(randomA>(1-P_AC))[0]]] += 3 #from 1=A to 4=C     
+            #MT[elements_in_B[np.where(randomB<P_BBE)[0]]] += 1 #from 2=B to 3=BE
+            #MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2 #from 2=B to 4=C   
+            #MT[elements_in_BE[np.where(randomBE<P_BEB)[0]]] -= 1 #from 3=BE to 2=B
+            #MT[elements_in_BE[np.where(randomBE>(1-P_BEC))[0]]] += 1 #from 3=BE to 4=C
             
                
-            # Update end of cap position
             # -----------------------------------------------------------------
-            
+            # Update end of cap position
+            # -----------------------------------------------------------------            
             old_current_cap_end = current_cap_end
             if simPa.unstable_cap_criteria > 1:
-                half_testbox = int(simPa.unstable_cap_criteria/2) # int() here same as int(np.floor())
-                #f = filter to check if N=unstable_cap_criteria neighboring dimer rings are unstable
-                Mtest = np.convolve(MT[:]!=4,f[:],'same') #convolution to find # of places where X neighbors are all hydrolysed enough
-                Mtest[0:(L_seed-half_testbox-1)] = simPa.unstable_cap_criteria                
-                #wrong?:Mtest[0:(L_seed-2*half_testbox+simPa.CAP_threshold)] = unstable_cap_criteria                
+                half_testbox = int(simPa.unstable_cap_criteria/2)
+                
+                # Convolution to find num of places where X neighbors are all hydrolysed enough
+                Mtest = np.convolve(MT[:]!=4,f[:],'same') 
+                Mtest[0:(L_seed-half_testbox-1)] = simPa.unstable_cap_criteria  
+                              
                 current_cap_end = np.where(np.concatenate(([0], Mtest[1:(L-half_testbox+1)])) <= simPa.CAP_threshold)[0][-1] + half_testbox
-                #wrong:current_cap_end = np.where(np.concatenate(([0], Mtest[1:(L-2*half_testbox+simPa.CAP_threshold)])) <= simPa.CAP_threshold)[0][-1] + half_testbox               
                 if current_cap_end < (L_seed-1): 
                     current_cap_end = L_seed - 1
             else:  # Go to faster way
                 current_cap_end = L_seed + np.where(np.concatenate(([4], MT[L_seed:L])) == 4)[0][-1] # end at last element = 'C' (=4)
             
             if current_cap_end < old_current_cap_end:  # Hydrolysis cannot go back!
-                current_cap_end = old_current_cap_end
-                
+                current_cap_end = old_current_cap_end          
             
             EB_profile_intermediate = EB_profile_intermediate + np.array(MT[(L-L_seed):L] == 2)
 
             # Update positions to be saved    
             if i % frame_taking == 0:              
-                        #if barrier: #if variable barrier present
-                            #if Lnew > (barrier - np.ceil(simPa.DXbarrier/simPa.dL_dimer)) and barrier_contact == 0:
-                            #    barrier_contact = i*dt
-                #add new data point:
+                # Add new data point:
                 MT_length.append(L) 
                 cap_end.append(current_cap_end)
-                EB_comet.append(len(np.where(MT == 2)[0])) #len(elements_in_B)) #BE CAREFUL: NOW it is elements in B (not BE like in maurer model), is not 100% correct measure  
-#                EB_comet.append(len(np.where(MT[(L-L_seed):L] == 2)[0])) #len(elements_in_B)) #BE CAREFUL: NOW it is elements in B (not BE like in maurer model), is not 100% correct measure  
-                
+                EB_comet.append(len(np.where(MT == 2)[0])) #BE CAREFUL: here it is elements in B (not BE like in maurer model), is not 100% correct measure for EB
+   
                 if simPa.take_EB_profiles:
                     EB_profiles_wholerun.append(np.array(EB_profile_intermediate)/frame_taking)
                     EB_profile_intermediate[0:L_seed] = 0 #reset
-                
-#                #check if barrier contact:
-#                if barrier:
-#                    if barrier_contact == 0:
-#                        if np.mean(MT_length[-(1+int(1/frame_taking)):-1]) > (barrier - np.ceil(simPa.DXbarrier/simPa.dL_dimer)):
-#                            barrier_contact = i*dt - np.random.rand() * frame_taking * dt 
-#                
             
+            # -----------------------------------------------------------------
             # Check if catastrophe occured
             # -----------------------------------------------------------------
-            
             if (L - current_cap_end) <= 0 and L > L_seed: 
                 
                 # Record data from run before break      
                 # Without Barrier: always record ||| with barrier: only record when in contact
                 
-                if (simPa.barrier != 0) == (barrier_contact != 0): # =IF true/true or false/false
+                if (simPa.barrier != 0) == (barrier_contact != 0): # = IF true/true or false/false
                     CATASTROPHE_TIMES.append(i*dt)
                     CATASTROPHE_LENGTH.append(L-L_seed)        
                     MT_length[-1] = L
                     cap_end[-1] = MT_length[-1] #set cap length to zero in case it gets lost due to binning (if frame_rate > dt)        
                     EB_comet[-1] = len(np.where(MT == 2)[0]) # NOT REAL EB, but "B" state !!              
                     
-                    EB_comet_sum.append(list(reversed(EB_comet)))
+                    #  Collect cap position and EB comet size 
+                    MT_length_full.append(MT_length)
+                    MT_cap.append(cap_end)
+                    EB_comet_sum.append(list(reversed(EB_comet)))     
+
+                    # Collect current cap criterium
+                    Cap_threshold.append(cap_crit)  
                     
                     if simPa.take_EB_profiles:
-                        EB_profiles.append(EB_profiles_wholerun)  # [-int(simPa.show_fraction/frame_rate_actual):-1])
+                        EB_profiles.append(EB_profiles_wholerun)
                         
-                    if len(MT_length) > show_fraction_frames:  # Save last piece of MT position
+                    # Save last piece of MT position
+                    if len(MT_length) > show_fraction_frames:  
                         MT_length_sum[cat_number][0:show_fraction_frames] = MT_length[-(1+show_fraction_frames):-1]
+                        Cap_length_sum[cat_number][0:show_fraction_frames] = cap_end[-(1+show_fraction_frames):-1]
+                        
                 else:  # Meaning no contact with barrier
                     CATASTROPHE_TIMES.append(0)
                     CATASTROPHE_LENGTH.append(0)  
                 
-                    
                 if simPa.barrier and barrier_contact != 0:
-                    #barrier_contact_times = np.append(barrier_contact_times,[i*dt - barrier_contact])
-                    #match contact time to last "frame"
-                    #barrier_contact_times = np.append(barrier_contact_times,[(i // frame_taking)*frame_taking*dt - barrier_contact])
                     barrier_contact_times = np.append(barrier_contact_times,[i * dt - barrier_contact])
                     catastrophe_at_barrier.append(cat_number)
                     
-                #barrier_contact_count = 0        
-                barrier_contact = 0 #set contact = off:    
+                if simPa.washout and washout !=0:
+                      washout_times = np.append(washout_times, [i*dt-washout_time])          
+                      catastrophe_washout.append(cat_number)    
+                         
+                barrier_contact = 0 # reset contact = off:    
                 
                 # Output progress:
                 print('\r', 'catastrophes: ', np.size(CATASTROPHE_TIMES), ' of ', simPa.no_cat, end="")
                 run_time += i*dt
                 
-                break;
+                break
     
-    return dt, MT_length_sum, CATASTROPHE_TIMES, CATASTROPHE_LENGTH, barrier_contact_times, EB_comet_sum, cap_end, frame_rate_actual, EB_profiles
+    return dt, MT_length_sum, MT_length_full, CATASTROPHE_TIMES, CATASTROPHE_LENGTH, barrier_contact_times, EB_comet_sum, MT_cap, Cap_threshold, frame_rate_actual, EB_profiles, washout_times, catastrophe_washout, Cap_length_sum
 
         
    
