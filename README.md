@@ -7,7 +7,8 @@ Work done by:
 - Marileen Dogterom
 
 ## Simulation code
-The full simulation code used to produce the results as published in [coming soon] is provided.
+The full simulation code used to produce the results as published in [coming soon] is provided.\ in this repository.  
+The code consits of the main simulation code (**simulation_main.py** and **simulation_functions.py**). Simulation parameters are specified in **simulation_parameters.py**. Functions for plotting the results are provided in **plotting_functions.py**.
 
 ## Runing the simulation
 Jupyter notebook(s) are provided to illustrate how to run the simlation. They can be found in the folder '\notebooks\'.
