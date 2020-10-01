@@ -7,6 +7,7 @@ Work done by:
 - Marileen Dogterom
 
 ## Simulation code
+![PyPI](https://img.shields.io/pypi/v/mtdynamics)
 [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B-orange)](https://fair-software.eu)
 
 The full simulation code used to produce the results as published in [coming soon] is provided.\ in this repository.  
