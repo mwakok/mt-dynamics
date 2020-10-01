@@ -1,9 +1,9 @@
-import setuptools
+from setuptools import setup
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(
+setup(
     name="mt-dynamics", # Replace with your own username
     version="0.1.0",
     author="Florian Huber and Maurits Kok",
