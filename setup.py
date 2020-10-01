@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="mt-dynamics", # Replace with your own username
-    version="0.0.1",
+    version="0.1.0",
     author="Florian Huber and Maurits Kok",
     author_email="f.huber@esciencecenter.nl",
     description="MT dynamics simulation",
@@ -19,4 +19,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+        "matplotlib",
+        "numpy",
+        "scipy",
+    ],
 )
