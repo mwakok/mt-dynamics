@@ -5,7 +5,7 @@ import numpy as np
 # ------------ MAIN FUNCTIONS FOR MT SIMULATION ("maurer model") --------------
 # -----------------------------------------------------------------------------
 
-def MT_RUN(simPa):
+def mt_run(simPa):
     """
     Main simulation function.
 

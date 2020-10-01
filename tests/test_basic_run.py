@@ -5,11 +5,12 @@ from parameters import ParameterSet
 import pytest
 
 path_root = os.path.dirname(os.getcwd())
-sys.path.insert(0, os.path.join(path_root, "code"))
-print(path_root)
+sys.path.insert(0, os.path.join(path_root, "mtdynamics"))
+print(os.path.join(path_root, "mtdynamics"))
 
-from simulation_main import MT_RUN
-import simulation_parameters as simParameters #import simulation parameters
+#from . import simulation_main as simulation_main
+from mtdynamics.simulation_main import mt_run
+import mtdynamics.simulation_parameters as simParameters #import simulation parameters
 
 
 def test_basic_run():
@@ -27,7 +28,7 @@ def test_basic_run():
     
     dt, MT_length_sum, MT_length_full, CATASTROPHE_TIMES, CATASTROPHE_LENGTH, \
     barrier_contact_times, EB_comet_sum, MT_cap, Cap_threshold, frame_rate_actual, \
-    EB_profiles, washout_times, catastrophe_washout, Cap_length_sum  = MT_RUN(simPa)
+    EB_profiles, washout_times, catastrophe_washout, Cap_length_sum  = mt_run(simPa)
     
     assert dt == pytest.approx(0.2461538, 1e-6), "Expected different dt"
     assert frame_rate_actual == pytest.approx(0.2461538, 1e-6), "Expected different frame rate"
