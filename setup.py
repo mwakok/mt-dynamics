@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="mt-dynamics", # Replace with your own username
+    name="mtdynamics", # Replace with your own username
     version="0.1.0",
     author="Florian Huber and Maurits Kok",
     author_email="f.huber@esciencecenter.nl",
@@ -12,7 +12,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/florian-huber/mt-dynamics",
-    packages=find_packages(),
+    packages=find_packages(exclude=['*tests*']),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: Apache Software License",
@@ -25,5 +25,6 @@ setup(
         "parameters",
         "scipy",
     ],
-    tests_require=['pytest-runner', 'pytest'],
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
 )
