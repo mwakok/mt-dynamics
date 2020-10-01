@@ -22,6 +22,7 @@ setuptools.setup(
     install_requires=[
         "matplotlib",
         "numpy",
+        "parameters",
         "scipy",
     ],
 )
