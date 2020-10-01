@@ -19,4 +19,4 @@ The code consits of the main simulation code (**simulation_main.py** and **simul
 ``pip install mtdynamics``
 
 ## Runing the simulation
-Jupyter notebook(s) are provided to illustrate how to run the simlation. They can be found in the folder '\notebooks\'.
+Jupyter notebook(s) are provided to illustrate how to run the simlation. They can be found in the folder ``\notebooks``.
