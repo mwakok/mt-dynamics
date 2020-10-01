@@ -25,4 +25,5 @@ setuptools.setup(
         "parameters",
         "scipy",
     ],
+    tests_require=['pytest'],
 )
