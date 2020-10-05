@@ -1,24 +1,5 @@
-#
-# mt-dynamics
-#
-# Copyright 2019 Florian Huber, Maurits Kok
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
 ## Dictionary to store all parameters
 simParameters = {}
-
 
 ## Simulation type choices
 simParameters['record_data'] = True
@@ -31,15 +12,10 @@ simParameters['record_cap'] = False
 simParameters['record_length'] = False
 simParameters['steady_state_analysis'] = False
 
-
 # Key simulation parameters
 simParameters['EB'] = 0
 #EB_growth_speed = np.array([[0, 1.68],[0.02, 2.79],[0.05, 2.79],[0.1, 3.36]])
-if simParameters['EB'] == 0: #set growth speed (only used for our special case... remove later)
-#    growth_speed = 1.68
-#    kBC = 0.07
-#    D_tip = 3720  
-    
+if simParameters['EB'] == 0: #set growth speed (only used for our special case... remove later)    
     kBC = 0.1
     D_tip = 2000   
     growth_speed = 1.8
