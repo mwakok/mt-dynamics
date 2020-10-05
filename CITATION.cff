@@ -11,7 +11,7 @@ authors:
     affiliation: "TU Delft"
     family-names: Kok
     given-names: Maurits
-    orcid: "?"
+    orcid: "https://orcid.org/0000-0002-0564-2614"
   -
     affiliation: "TU Delft, Department of Bionanoscience"
     family-names: Dogterom
@@ -26,6 +26,6 @@ keywords:
   - "simulation"
   - "microtubule catastrophes"
 license: "Apache-2.0"
-repository-code: "https://github.com/florian-huber/mt-dynamics"
-title: mt-dynamics
+repository-code: "https://github.com/florian-huber/mtdynamics"
+title: mtdynamics
 ...
