@@ -8,7 +8,7 @@ Work done by:
 
 ## Simulation code
 [![Liscence](https://img.shields.io/github/license/florian-huber/mtdynamics)](https://github.com/florian-huber/mtdynamics)
-[![PyPI](https://img.shields.io/pypi/v/mtdynamics)](https://pypi.org/project/mtdynamics/0.1.0/)
+[![PyPI](https://img.shields.io/pypi/v/mtdynamics)](https://pypi.org/project/mtdynamics/0.1.1/)
 [![fair-software.eu](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow)](https://fair-software.eu)
 
 The full simulation code used to produce the results as published in [coming soon] is provided.\ in this repository.  
@@ -36,3 +36,17 @@ pip install mtdynamics
 
 ## Runing the simulation
 Jupyter notebook(s) are provided to illustrate how to run the simlation. They can be found in the folder ``\notebooks``.
+
+## Making a new release
+
+To create release you need write permission on the repository.
+
+1. Check author list in `citation.cff` file.
+1. Update version in ``setup.py`` and ``CHANGELOG.md``.
+1. Update the `CHANGELOG.md` to include changes made.
+1. Goto [GitHub release page](https://github.com/florian-huber/mtdynamics/releases)
+1. Press draft a new release button
+1. Fill version, title and description field
+1. Press the Publish Release button
+
+A GitHub action will run which will publish the new version to [pypi](https://pypi.org/).
