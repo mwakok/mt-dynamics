@@ -34,7 +34,8 @@ def mt_run(simPa):
 
     print('EB: ', simPa.EB, '   kBC: ', simPa.kBC, '   D_tip: ', simPa.D_tip)
     print('--- time step dt = %.3f s' %dt)
-    print('--- MTs growth ', dimers_per_step, ' dimers per step (D_tip = ', simPa.D_tip, ' -> noise STD= ', tip_noise, ' )' )
+    print('--- MTs growth ', dimers_per_step, ' dimers per step (D_tip = ',
+          simPa.D_tip, ' -> noise STD= ', tip_noise, ' )')
     frame_taking = round(simPa.frame_rate_aim/dt)
     frame_rate_actual = frame_taking*dt
 
@@ -63,7 +64,7 @@ def mt_run(simPa):
     # Initialize variables
     CATASTROPHE_TIMES = []
     CATASTROPHE_LENGTH = []
-    catastrophe_at_barrier =[]
+    catastrophe_at_barrier = []
     catastrophe_washout = []
     EB_comet_sum = []
     EB_profile_intermediate = np.zeros(L_seed, dtype=np.int)
@@ -81,7 +82,7 @@ def mt_run(simPa):
     too_long = 0 # reset
     run_time = 0 # reset
 
-    for cat_number in range(0,simPa.no_cat):
+    for cat_number in range(0, simPa.no_cat):
         # Reset everything:
         L = L_seed
         Lnew = L
@@ -105,18 +106,18 @@ def mt_run(simPa):
 
         # Interrupt run if too long (e.g. when MT is too stable)
         if too_long > simPa.too_stable_check:
-            break;
+            break
         if run_time > simPa.total_max_time:
             print("run stopped - was longer than time limit!")
-            break;
+            break
 
         # ---------------------------------------------------------------------
         # ------------------------ Start time loop ----------------------------
         # ---------------------------------------------------------------------
-        for i in range(1,N_max+1):  # N_max timesteps
+        for i in range(1, N_max + 1):  # N_max timesteps
 
             if i == N_max: # Check if MT grows for too long
-                run_time += N_max*dt
+                run_time += N_max * dt
                 too_long += 1
                 print("Too long growth event! (", simPa.EB, simPa.kBC, simPa.D_tip, ")")
 
@@ -156,7 +157,7 @@ def mt_run(simPa):
             if deterministic_growth >= 1: # if growth event:
                 deterministic_growth = deterministic_growth-1
                 growth = np.round(dimers_per_step + tip_noise*np.random.randn(1))
-                ''' Option to include dimer-type dependent growth dynamics
+                """ Option to include dimer-type dependent growth dynamics
                 if MT[L-1] == 1:
                     growth = round(1+ simPa.noise_STD_A*np.random.randn(1)) #%= random number with std= 1; Round to draw discrete number
                 elif MT[L-1] == 4:
@@ -164,7 +165,7 @@ def mt_run(simPa):
                 elif MT[L-1] == 2:
                     growth = round(P_growth_BE + simPa.noise_STD_BE*np.random.randn(1))
                 else: # for MT[L-1] == 3
-                    growth = round(P_growth_B + simPa.noise_STD_B*np.random.randn(1))   '''
+                    growth = round(P_growth_B + simPa.noise_STD_B*np.random.randn(1))"""
 
                 # Option to simulate 'washout' experiment
                 if washout == 1:
@@ -184,7 +185,7 @@ def mt_run(simPa):
 
                         #  Change size of MT array when necessary
                         if Lnew > len(MT):
-                            MT = np.append(MT,np.zeros(Lnew-L + 500, dtype=np.int))
+                            MT = np.append(MT, np.zeros(Lnew - L + 500, dtype=np.int))
 
                         # Option to simlate growth against rigid barrier
                         if simPa.barrier:
@@ -213,9 +214,9 @@ def mt_run(simPa):
                     L = max(L, L_seed) #avoid L < L_seed
 
                     if simPa.washout:
-                        if (i*dt) >= simPa.washout_time and washout ==0:
+                        if (i * dt) >= simPa.washout_time and washout == 0:
                             washout = 1
-                            washout_time = i*dt
+                            washout_time = i * dt
 
             # -----------------------------------------------------------------
             # Hydrolysis ------------------------------------------------------
@@ -227,7 +228,7 @@ def mt_run(simPa):
             randomB = np.random.rand(len(elements_in_B))
 
             # Transition from dimer state 2=B to 4=C
-            MT[elements_in_B[np.where(randomB<P_BC)[0]]] += 2
+            MT[elements_in_B[np.where(randomB < P_BC)[0]]] += 2
 
             """
             # -----------------------------------------------------------------
@@ -265,14 +266,15 @@ def mt_run(simPa):
             # -----------------------------------------------------------------
             old_current_cap_end = current_cap_end
             if simPa.unstable_cap_criteria > 1:
-                half_testbox = int(simPa.unstable_cap_criteria/2)
+                half_testbox = int(simPa.unstable_cap_criteria / 2)
 
                 # Convolution to find num of places where X neighbors are all hydrolysed enough
-                Mtest = np.convolve(MT[:]!=4,f[:],'same')
-                Mtest[0:(L_seed-half_testbox-1)] = simPa.unstable_cap_criteria
+                Mtest = np.convolve(MT[:] != 4, f[:], 'same')
+                Mtest[0:(L_seed-half_testbox - 1)] = simPa.unstable_cap_criteria
 
-                current_cap_end = np.where(np.concatenate(([0], Mtest[1:(L-half_testbox+1)])) <= simPa.CAP_threshold)[0][-1] + half_testbox
-                if current_cap_end < (L_seed-1):
+                current_cap_end = np.where(np.concatenate(([0], Mtest[1:(L - half_testbox + 1)])) \
+                                           <= simPa.CAP_threshold)[0][-1] + half_testbox
+                if current_cap_end < (L_seed - 1):
                     current_cap_end = L_seed - 1
             else:  # Go to faster way
                 current_cap_end = L_seed + np.where(np.concatenate(([4], MT[L_seed:L])) == 4)[0][-1] # end at last element = 'C' (=4)
@@ -329,12 +331,12 @@ def mt_run(simPa):
                     CATASTROPHE_LENGTH.append(0)
 
                 if simPa.barrier and barrier_contact != 0:
-                    barrier_contact_times = np.append(barrier_contact_times,[i * dt - barrier_contact])
+                    barrier_contact_times = np.append(barrier_contact_times, [i * dt - barrier_contact])
                     catastrophe_at_barrier.append(cat_number)
 
-                if simPa.washout and washout !=0:
-                      washout_times = np.append(washout_times, [i*dt-washout_time])
-                      catastrophe_washout.append(cat_number)
+                if simPa.washout and washout != 0:
+                    washout_times = np.append(washout_times, [i*dt-washout_time])
+                    catastrophe_washout.append(cat_number)
 
                 barrier_contact = 0 # reset contact = off:
 
