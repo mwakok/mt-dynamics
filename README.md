@@ -18,7 +18,7 @@ The code consits of the main simulation code (**simulation_main.py** and **simul
 Python version 3.6 or higher.
 
 ### Installation
-If you work with Anaconda you choose to create an own environment for ``mtdynamics`` bu running the following commands:
+If you work with Anaconda you choose to create an own environment for ``mtdynamics`` by running the following commands:
 
 ```
 # install mtdynamics in a new virtual environment to avoid dependency clashes
