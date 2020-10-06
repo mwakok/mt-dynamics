@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from time import clock #, strftime
+import time
 from matplotlib import pyplot as plt
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -9,7 +9,7 @@ from scipy.special import gammainc
 from itertools import islice
 
 # Initialize random number generator:
-np.random.seed(int(100*clock()))
+np.random.seed(int(100*time.time.perf_counter()))
 
 ## ----------------------------------------------------------------------------
 ## --------------------------- Plotting functions -----------------------------
