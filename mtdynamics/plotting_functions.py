@@ -9,7 +9,7 @@ from scipy.special import gammainc
 from itertools import islice
 
 # Initialize random number generator:
-np.random.seed(int(100*time.time.perf_counter()))
+np.random.seed(int(100*time.perf_counter()))
 
 ## ----------------------------------------------------------------------------
 ## --------------------------- Plotting functions -----------------------------
@@ -364,10 +364,8 @@ def fig_sim_verification(simPa,
     # Plot the results
     fig , (ax1, ax2) = plt.subplots(1,2, figsize=(12, 7))
 
-    ax1.hold(True)
     ax1.hist(v_fluc, bins = 60, density = True, color = "skyblue", label = "simulated data")
     ax1.plot(x, G, 'r', label = "theoretical distribution")
-    ax1.hold(False)
 
     ax2.hist(c_fluc, bins = 60, density = True, color = "skyblue", label = "simulated data")
 
@@ -378,8 +376,8 @@ def fig_sim_verification(simPa,
 
     if simPa.record_data:
             filename = file_figure + '_fig' + str(int(num_fig))
-            plt.savefig(filename+'.eps', format='eps', dpi=1000)
-            plt.savefig(filename+'.png', format='png', dpi=200)
+            plt.savefig(filename + '.eps', format='eps', dpi=1000)
+            plt.savefig(filename + '.png', format='png', dpi=200)
 
     plt.show()
 
@@ -626,7 +624,6 @@ def fig_EB_at_barrier(simPa,
     if num_fig != 0:
         plt.figure(num_fig)
         plt.clf()
-        plt.hold(True)
         for a in range(0,len(valid_runs)):
             plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames+1,max_barrier_contact_frames+1),
                      EB_signal[a][0:frame_window][::-1]/norm,color=plt.cm.Reds(0.3+0.7*a/len(valid_runs)))
@@ -640,7 +637,6 @@ def fig_EB_at_barrier(simPa,
         print(popt)
         plt.plot(xdata, func(xdata, *popt)/norm, 'c--',)
         plt.text(8,1.5*max(ydata/norm),'decay rate (exp. fit): %.2f' %popt[1])
-        plt.hold(False)
 
         if simPa.record_data:
                 filename = file_figure + '_fig' + str(int(num_fig))
@@ -701,7 +697,6 @@ def fig_EB_before_cat(simPa, file_figure, num_fig, EB_comet_sum, barrier_contact
     if num_fig != 0:
         plt.figure(num_fig)
         plt.clf()
-        plt.hold(True)
         plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames,0),
                  EB_signal_mean[0:min_length_run_frames][::-1]/norm,'red', linewidth=2.0)
 
@@ -713,8 +708,6 @@ def fig_EB_before_cat(simPa, file_figure, num_fig, EB_comet_sum, barrier_contact
         plt.title("Mean GTP/GDP-Pi prior to catastrophe")
         plt.xlabel('time before catastrophe [s]');
         plt.ylabel('GTP/GDP-Pi');
-
-        plt.hold(False)
 
         if simPa.record_data:
                 filename = file_figure + '_fig' + str(int(num_fig))
@@ -804,7 +797,6 @@ def fig_MT_before_cat(simPa,
 
         plt.figure(num_fig)
         plt.clf()
-        plt.hold(True)
 
         # Plot mean tip position
         plt.plot(simPa.frame_rate_actual * np.arange(-len(MT_length_mean),0),
@@ -852,7 +844,6 @@ def fig_MT_before_cat(simPa,
                 transform=plt.ax.transAxes, color='black', fontsize=11)
 
         plt.xlim(-30, 2)
-        plt.hold(False)
 
         if simPa.record_data:
                 filename = file_figure + '_fig' + str(int(num_fig))
@@ -1191,9 +1182,6 @@ def fig_dist_fit(simPa,
     popt2, pcov2 = curve_fit(exp_cdf, x, y, p0=(1e-2))
     y2 = exp_cdf(x_fit, *popt2)
 
-    # Plot figure
-    plt.hold(True)
-
     if list_dim(Cum_dist) > 1:
         c_range = 1/(list_dim(Cum_dist)-1)
     else:
@@ -1256,8 +1244,6 @@ def fig_dist_fit(simPa,
         ax2.set_xlabel('length [um]')
     ax2.set_ylabel('Tip diffusion [$nm^{2}s^{-1}$]')
     ax2.set_title('Microtubule ageing')
-
-    plt.hold(False)
 
     if simPa.record_data:
         filename = file_figure + '_fig' + str(int(num_fig))
@@ -1388,7 +1374,6 @@ def fig_cap_size_before_cat(simPa,
     plt.figure(num_fig)
     plt.clf()
 
-    plt.hold(True)
     plt.plot(simPa.frame_rate_actual * np.arange(-min_length_run_frames,0),
              cap_average[0:min_length_run_frames][::1],'red', linewidth=2.0)
 
@@ -1400,8 +1385,6 @@ def fig_cap_size_before_cat(simPa,
     plt.title("Mean Cap size prior to catastrophe")
     plt.xlabel('time before catastrophe [s]');
     plt.ylabel('Length of cap [nm]');
-
-    plt.hold(False)
 
     if simPa.record_data:
             filename = file_figure + '_fig' + str(int(num_fig))

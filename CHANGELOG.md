@@ -22,5 +22,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - This is the initial version of mtdynamics.
 
-[Unreleased]: https://github.com/matchms/matchms/compare/0.1.0...HEAD
-[0.1.0]: https://github.com/matchms/matchms/releases/tag/0.1.0
+[Unreleased]: https://github.com/florian-huber/mtdynamics/compare/0.1.0...HEAD
+[0.1.0]: https://github.com/florian-huber/mtdynamics/releases/tag/0.1.0
