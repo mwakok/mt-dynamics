@@ -1,4 +1,4 @@
-import simulation_parameters as simpa
+import mtdynamics.simulation_parameters as simpa
 from parameters import ParameterSet
 from itertools import islice
 import csv
