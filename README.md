@@ -18,8 +18,19 @@ The code consits of the main simulation code (**simulation_main.py** and **simul
 Python version 3.6 or higher.
 
 ### Installation
-``mtdynamics`` can now be installed via pip:
-``pip install mtdynamics``
+If you work with Anaconda you choose to create an own environment for ``mtdynamics`` bu running the following commands:
+
+```
+# install mtdynamics in a new virtual environment to avoid dependency clashes
+conda create --name mtdynamics python=3.8
+conda activate mtdynamics
+pip install mtdynamics
+```
+
+Or simply install mtdynamics in your already existing environment:
+```
+pip install mtdynamics
+```
 
 ## Runing the simulation
 Jupyter notebook(s) are provided to illustrate how to run the simlation. They can be found in the folder ``\notebooks``.
