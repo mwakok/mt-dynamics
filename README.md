@@ -25,6 +25,7 @@ If you work with Anaconda you choose to create an own environment for ``mtdynami
 conda create --name mtdynamics python=3.8
 conda activate mtdynamics
 pip install mtdynamics
+pip install jupyter  # Optional, if you want to run jupyter notebooks from this environment
 ```
 
 Or simply install mtdynamics in your already existing environment:
