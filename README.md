@@ -14,6 +14,9 @@ Work done by:
 The full simulation code used to produce the results as published in [coming soon] is provided.\ in this repository.  
 The code consits of the main simulation code (**simulation_main.py** and **simulation_functions.py**). Simulation parameters are specified in **simulation_parameters.py**. Functions for plotting the results are provided in **plotting_functions.py**.
 
+### Requirements
+Python version 3.6 or higher.
+
 ### Installation
 ``mtdynamics`` can now be installed via pip:
 ``pip install mtdynamics``
